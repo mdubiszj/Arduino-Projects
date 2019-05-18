@@ -1,4 +1,4 @@
-/*
+//*
  Engineer: Michael Dubisz
  5/19/2019
  
@@ -26,6 +26,9 @@
 //this is the initial speed of how fast the obstacles move 1 space (in ms) 
 #define INITIAL_SPEED   800
 
+//percentage that an obstacle will appear (0-99)
+#define OBSTACLE_CHANCE 99
+
 
 //used to keep track of where obstacles are
 bool row0 [16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -35,6 +38,7 @@ volatile bool heroPosition = 0;
 unsigned long counter = 0;
 volatile int gameState = MENU;
 int speed = INITIAL_SPEED;
+int temp = 0;
 
 
 //this character represents the hero
@@ -166,6 +170,47 @@ void PrintGameOver()
 }
 
 
+//has a chance to put an obstacle at the end of the rows (50-50 chance as to which row it looks at first)
+void FormNewObstacle()
+{
+    temp = rand()%100;
+    
+    if(temp < 50)
+    {
+        NewObstacleRow0();
+        NewObstacleRow1();
+    }
+    
+    else
+    {
+        NewObstacleRow1();
+        NewObstacleRow0();
+    }
+}
+
+
+void NewObstacleRow0()
+{
+    //if there is no obstacle directly below or to the bottom-left, row0 has a chance to form a new obstacle
+    if (!row1[15] && !row1[14])
+      {
+          temp = rand()%100;
+          row0[15] = (temp<OBSTACLE_CHANCE) ? 1: 0;
+      }
+}
+
+
+void NewObstacleRow1()
+{
+    //if there is no obstacle directly above or to the top-left, row1 has a chance to form a new obstacle
+    if (!row0[14] && !row0[15])
+      {
+          temp = rand()%100;
+          row1[15] = (temp<OBSTACLE_CHANCE) ? 1: 0;
+      }
+}
+
+
 
 void loop() {
   
@@ -190,9 +235,14 @@ void loop() {
       }
       
       
+      //create new obstacles at the end of the rows
+      FormNewObstacle();
+        
+      
+      
       //print new obstacles every other space
-      row0[15] = (counter%4==0) ? 1 : 0;
-      row1[15] = (counter%4==2) ? 1 : 0;
+    //   row0[15] = (counter%4==0) ? 1 : 0;
+    //   row1[15] = (counter%4==2) ? 1 : 0;
       
       
       // clear the screen (but reprint the hero)
@@ -224,24 +274,24 @@ void loop() {
       //(checks for collision with obstacle every 1/10 of speed)
       for(int i = 0; i < 10; i++)
       {
-          if( (row0[0] && heroPosition == 0) || (row1[0] && heroPosition == 1) )
-          {
-              gameState = GAME_OVER;
-              PrintGameOver();
-              gameState = MENU;
+        //   if( (row0[0] && heroPosition == 0) || (row1[0] && heroPosition == 1) )
+        //   {
+        //       gameState = GAME_OVER;
+        //       PrintGameOver();
+        //       gameState = MENU;
               
-              //reset counter, hero position, speed, and obstacle markers
-              counter = 0;
-              heroPosition = 0;
-              speed = INITIAL_SPEED;
-              for(int i = 0; i < 16; i++)
-              {
-                  row0[i] = 0;
-                  row1[i] = 0;
-              }
+        //       //reset counter, hero position, speed, and obstacle markers
+        //       counter = 0;
+        //       heroPosition = 0;
+        //       speed = INITIAL_SPEED;
+        //       for(int i = 0; i < 16; i++)
+        //       {
+        //           row0[i] = 0;
+        //           row1[i] = 0;
+        //       }
               
-              break;
-          }
+        //       break;
+        //   }
           delay(speed/10);
       }
       
