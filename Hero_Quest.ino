@@ -1,6 +1,6 @@
 /*
  Engineer: Michael Dubisz
- 5/18/2019
+ 5/19/2019
  
  
  This program runs a game where the hero must dodge obstacles in his way
@@ -17,19 +17,27 @@
 
 
 #define BUTTON_PIN  2
-#define MENU        0
-#define GAME        1
+
+//different values for variable gameState
+#define MENU            0
+#define GAME            1
+#define GAME_OVER       2
+
+//this is the initial speed of how fast the obstacles move 1 space (in ms) 
+#define INITIAL_SPEED   800
+
 
 //used to keep track of where obstacles are
 bool row0 [16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 bool row1 [16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 volatile bool heroPosition = 0;
-byte counter = 0;
+unsigned long counter = 0;
 volatile int gameState = MENU;
+int speed = INITIAL_SPEED;
 
 
-//this character respresents the hero
+//this character represents the hero
 byte hero[8] = {
   B01110,
   B01110,
@@ -41,7 +49,7 @@ byte hero[8] = {
   B01000,
 };
 
-//this character represents the obstacles
+//this character represents the obstacle
 byte obstacle[8] = {
   B11111,
   B10001,
@@ -62,9 +70,6 @@ const int rs = 12, en = 11, d4 = 6, d5 = 5, d6 = 4, d7 = 3;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 
-
-
-// the setup routine runs once when you press reset:
 void setup() {
   
   pinMode(BUTTON_PIN,INPUT);
@@ -82,49 +87,100 @@ void setup() {
 }
 
 
+
+//button performs different actions depending on what gameState the program is in
 void ButtonPress()
 {
-    if(gameState == MENU)
-    {
-        gameState = GAME;
-        lcd.clear();
-        lcd.setCursor(0,0);
-        lcd.write(byte(1));
-    }
+    //deals with debouncing
+    delay(40);
     
-    else if (gameState == GAME)
+    switch(gameState)
     {
-        //clear where the hero currently is
-        lcd.setCursor(0,heroPosition);
-        lcd.print(' ');
+        //start game
+        case MENU:
+        {
+            gameState = GAME;
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.write(byte(1));
+            break;
+        }
         
-        //toggle row that the hero is in 
-        heroPosition = !heroPosition;
+        //toggle hero position
+        case GAME:
+        {
+            //clear where the hero currently is
+            lcd.setCursor(0,heroPosition);
+            lcd.print(' ');
+            
+            //toggle row that the hero is in 
+            heroPosition = !heroPosition;
+            
+            //print the hero in the new row
+            lcd.setCursor(0,heroPosition);
+            lcd.write(byte(1));
+            break;
+        }
         
-        //print the hero in the new row
-        lcd.setCursor(0,heroPosition);
-        lcd.write(byte(1));
-        //delay(15);
+        //do nothing
+        case GAME_OVER:
+        {
+            break;
+        }
     }
 }
 
+
+//print game menu
+void PrintMenu()
+{
+  lcd.clear();
+  lcd.setCursor(3,0);
+  lcd.print("HERO QUEST");
+  
+  lcd.setCursor(1,0);
+  lcd.write(byte(1));
+  
+  lcd.setCursor(14,0);
+  lcd.write(byte(2));
+  
+  lcd.setCursor(2,1);
+  lcd.print("Press Button");
+}
+
+
+//print game over message and score
+void PrintGameOver()
+{
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("GAME OVER");
+    delay(2000);
+    
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("SCORE:");
+    lcd.setCursor(6,0);
+    lcd.print(counter);
+    delay(2000);
+}
 
 
 
 void loop() {
   
-      //print menu
-      lcd.setCursor(0,0);
-      lcd.print("Hero Quest");
-      lcd.setCursor(0,1);
-      lcd.print("Press Button:");
+  PrintMenu();
   
   //wait until button is pressed/ gameMode switches to GAME
-  while(gameState == MENU){}
+  while(gameState != GAME){}
   
   
   while(gameState == GAME)
   {
+      
+      //course goes 25% faster every 20 spaces 
+      if(counter%20 == 0)
+        speed = 0.8 * speed;
       
       //shift row markers 1 left
       for(int i = 0; i < 15; i++)
@@ -160,33 +216,36 @@ void loop() {
           }
       }
       
+      //increment counter
+      counter++;
+      
       
       //if there is an obstacle in the same space as the hero, then it's GAME OVER
+      //(checks for collision with obstacle every 1/10 of speed)
       for(int i = 0; i < 10; i++)
       {
-          if( (row0[0] && heroPosition == 0) || (row1[0] && heroPosition ==1) )
+          if( (row0[0] && heroPosition == 0) || (row1[0] && heroPosition == 1) )
           {
-              lcd.clear();
-              lcd.setCursor(0,0);
-              lcd.print("GAME OVER");
+              gameState = GAME_OVER;
+              PrintGameOver();
+              gameState = MENU;
               
-              delay(2000);
-              
-              //reset counter, hero position & obstacle markers
+              //reset counter, hero position, speed, and obstacle markers
               counter = 0;
               heroPosition = 0;
+              speed = INITIAL_SPEED;
               for(int i = 0; i < 16; i++)
               {
                   row0[i] = 0;
                   row1[i] = 0;
               }
               
-              gameState = MENU;
+              break;
           }
-          
-          delay(100);
+          delay(speed/10);
       }
       
-      counter++;
+      
   }
+  
 }
