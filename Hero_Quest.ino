@@ -1,4 +1,4 @@
-//*
+/*
  Engineer: Michael Dubisz
  5/19/2019
  
@@ -16,6 +16,9 @@
 
 
 
+
+
+
 #define BUTTON_PIN  2
 
 //different values for variable gameState
@@ -26,8 +29,8 @@
 //this is the initial speed of how fast the obstacles move 1 space (in ms) 
 #define INITIAL_SPEED   800
 
-//percentage that an obstacle will appear (0-99)
-#define OBSTACLE_CHANCE 99
+//chance that an obstacle will appear (0-99)
+#define OBSTACLE_CHANCE 75
 
 
 //used to keep track of where obstacles are
@@ -36,8 +39,12 @@ bool row1 [16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 volatile bool heroPosition = 0;
 unsigned long counter = 0;
+unsigned long startTime = 0;
+unsigned long currentTime = 0;
+unsigned long testTime = 0;
 volatile int gameState = MENU;
 int speed = INITIAL_SPEED;
+int augmentedChance = 0;
 int temp = 0;
 
 
@@ -55,14 +62,25 @@ byte hero[8] = {
 
 //this character represents the obstacle
 byte obstacle[8] = {
-  B11111,
-  B10001,
-  B10001,
-  B10101,
-  B10101,
-  B10001,
-  B10001,
-  B11111,
+//basic block
+//   B11111,
+//   B10001,
+//   B10001,
+//   B10101,
+//   B10101,
+//   B10001,
+//   B10001,
+//   B11111,
+
+//skull
+    B01110,
+    B11111,
+    B10101,
+    B11111,
+    B11111,
+    B01110,
+    B01010,
+    B00000
 };
 
 
@@ -81,6 +99,8 @@ void setup() {
   //set pin 2 as an interrupt
   attachInterrupt(0, ButtonPress, RISING);
   
+  //seed the RNG with the input from an unused analog pin
+  randomSeed(analogRead(0));
   
   lcd.begin(16,2);
   
@@ -173,40 +193,56 @@ void PrintGameOver()
 //has a chance to put an obstacle at the end of the rows (50-50 chance as to which row it looks at first)
 void FormNewObstacle()
 {
-    temp = rand()%100;
+    temp = random(0,100);
     
     if(temp < 50)
     {
-        NewObstacleRow0();
         NewObstacleRow1();
+        NewObstacleRow0();
     }
     
     else
     {
-        NewObstacleRow1();
         NewObstacleRow0();
+        NewObstacleRow1();
     }
 }
 
 
+//forms obstacle in row 0
 void NewObstacleRow0()
 {
+    //if there's a block right next to it or the next space over, there's a smaller chance to spawn a new one
+    //(helps prevent long chains in the same row)
+    if(row0[13] || row0[14])
+        augmentedChance = 0.5 * OBSTACLE_CHANCE;
+    else
+        augmentedChance = OBSTACLE_CHANCE;
+    
     //if there is no obstacle directly below or to the bottom-left, row0 has a chance to form a new obstacle
     if (!row1[15] && !row1[14])
       {
-          temp = rand()%100;
-          row0[15] = (temp<OBSTACLE_CHANCE) ? 1: 0;
+          temp = random(0,100);
+          row0[15] = (temp<augmentedChance) ? 1: 0;
       }
 }
 
 
+//forms obstacle in row 1
 void NewObstacleRow1()
 {
+    //if there's a block right next to it or the next space over, there's a smaller chance to spawn a new one
+    //(helps prevent long chains in the same row)
+    if(row1[13] || row1[14])
+        augmentedChance = 0.5 * OBSTACLE_CHANCE;
+    else
+        augmentedChance = OBSTACLE_CHANCE;
+    
     //if there is no obstacle directly above or to the top-left, row1 has a chance to form a new obstacle
     if (!row0[14] && !row0[15])
       {
-          temp = rand()%100;
-          row1[15] = (temp<OBSTACLE_CHANCE) ? 1: 0;
+          temp = temp = random(0,100);
+          row1[15] = (temp<augmentedChance) ? 1: 0;
       }
 }
 
@@ -219,13 +255,24 @@ void loop() {
   //wait until button is pressed/ gameMode switches to GAME
   while(gameState != GAME){}
   
+  startTime = millis();
+  testTime = millis();
   
   while(gameState == GAME)
   {
       
-      //course goes 25% faster every 20 spaces 
-      if(counter%20 == 0)
-        speed = 0.8 * speed;
+      //course goes 25% faster every 15 seconds
+      currentTime = millis();
+      if((currentTime-startTime) >= 15000)
+      {
+          speed = 0.8 * speed;
+          startTime = millis();
+      }
+      
+    //   //test
+    //   if((currentTime-testTime) >= 30000)
+    //     while(1){}
+        
       
       //shift row markers 1 left
       for(int i = 0; i < 15; i++)
@@ -237,12 +284,6 @@ void loop() {
       
       //create new obstacles at the end of the rows
       FormNewObstacle();
-        
-      
-      
-      //print new obstacles every other space
-    //   row0[15] = (counter%4==0) ? 1 : 0;
-    //   row1[15] = (counter%4==2) ? 1 : 0;
       
       
       // clear the screen (but reprint the hero)
@@ -269,30 +310,36 @@ void loop() {
       //increment counter
       counter++;
       
-      
-      //if there is an obstacle in the same space as the hero, then it's GAME OVER
-      //(checks for collision with obstacle every 1/10 of speed)
-      for(int i = 0; i < 10; i++)
+      //first 12 spaces go fast
+      if (counter <= 12)
+        delay(50);
+        
+      else
       {
-        //   if( (row0[0] && heroPosition == 0) || (row1[0] && heroPosition == 1) )
-        //   {
-        //       gameState = GAME_OVER;
-        //       PrintGameOver();
-        //       gameState = MENU;
-              
-        //       //reset counter, hero position, speed, and obstacle markers
-        //       counter = 0;
-        //       heroPosition = 0;
-        //       speed = INITIAL_SPEED;
-        //       for(int i = 0; i < 16; i++)
-        //       {
-        //           row0[i] = 0;
-        //           row1[i] = 0;
-        //       }
-              
-        //       break;
-        //   }
-          delay(speed/10);
+          //if there is an obstacle in the same space as the hero, then it's GAME OVER
+          //(checks for collision with obstacle every 1/5 of speed)
+          for(int i = 0; i < 5; i++)
+          {
+              if( (row0[0] && heroPosition == 0) || (row1[0] && heroPosition == 1) )
+              {
+                  gameState = GAME_OVER;
+                  PrintGameOver();
+                  gameState = MENU;
+                  
+                  //reset counter, hero position, speed, and obstacle markers
+                  counter = 0;
+                  heroPosition = 0;
+                  speed = INITIAL_SPEED;
+                  for(int i = 0; i < 16; i++)
+                  {
+                      row0[i] = 0;
+                      row1[i] = 0;
+                  }
+                  
+                  break;
+              }
+              delay(speed/5);
+          }
       }
       
       
