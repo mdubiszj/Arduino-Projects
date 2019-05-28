@@ -1,11 +1,11 @@
 /*
     Engineer: Michael Dubisz
-    5/26/2019
+    5/27/2019
     
     This program will play a melody on a piezo buzzer
     
     HARDWARE:
-        Piezo buzzer (passive or active) & 100ohm resistor
+        Passive piezo buzzer & 100ohm resistor
         Button & 10kohm resistor
         
 */
@@ -106,14 +106,15 @@ void pitches()
 #define NOTE_DS8 4978
 }
 
-#define SPEAKER_PIN     8
+#define SPEAKER_1_PIN   8
+#define SPEAKER_2_PIN   9
 #define BUTTON_PIN      2
 
-#define SONG_DURATION   24
-//based on 4/4 time
-#define TEMPO           120
+#define SONG_DURATION   38
+//beats per minute, based on 4/4 time
+#define TEMPO           110
 //(0 = really short, 1 = really long)
-#define NOTE_LENGTH     0.5
+#define NOTE_LENGTH     0.9
 
 
 volatile bool playMusic = false;
@@ -133,23 +134,34 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // notes in the melody:
 int melody[] = {
-  NOTE_FS4, NOTE_CS5, NOTE_B4, NOTE_CS5, NOTE_FS4,
-  0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_CS5, NOTE_B4,
-  0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_FS4,
-  0, NOTE_B4, NOTE_A4, NOTE_GS4, NOTE_B4, NOTE_CS5, NOTE_A4, NOTE_FS4
+  0, NOTE_DS4, NOTE_DS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_GS4,
+  0, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_GS4, NOTE_F4, NOTE_FS4, NOTE_F4, NOTE_DS4,
+  0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
+  0, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5
 };
+
+int harmony[] = {
+  
+};
+
 
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
 // (a dotted note can be the value in between the two notes. EX: dotted quarter-note = 3)
-int noteDurations[] = {
-  3, 16, 16, 4, 4,
-  3, 16, 16, 8, 8, 4, 
-  3, 16, 16, 4, 4,
-  3, 16, 16, 8, 8, 8, 8, 4
+int beats[] = {
+  4, 8, 8, 8, 8, 8, 8, 1,
+  8, 8, 8, 8, 8, 8, 8, 8, 3, 8, 2,
+  8, 8, 8, 8, 8, 8, 8, 3, 8, 2, 8,
+  3, 8, 8, 8, 8, 3, 8, 2
 };
 
 
 void setup() {
+    
+    for(int i = 0; i < SONG_DURATION; i++)
+    {
+        harmony[i] = harmony[i]/2;
+    }
+    
     
     pinMode(BUTTON_PIN, INPUT);
     
@@ -160,9 +172,9 @@ void setup() {
     
     //plays a nasty note if the melody, noteDuration, and SONG_DURATION*2 are not all the same
     //(don't ask me why we have to multiply SONG_DURATION by 2)
-    if( (sizeof(melody) != sizeof(noteDurations)) || (SONG_DURATION*2 != sizeof(melody)) )
+    if( (sizeof(melody) != sizeof(beats)) || (SONG_DURATION*2 != sizeof(melody)) )
     {
-        tone(SPEAKER_PIN, NOTE_D3, 1000);
+        tone(SPEAKER_1_PIN, NOTE_D3, 1000);
         // lcd.setCursor(0,0);
         // lcd.print(sizeof(noteDurations));
         // lcd.setCursor(0,1);
@@ -198,13 +210,15 @@ void loop()
         
     //note duration = 240,000/ (tempo*rhythm of note)
     //(240,000 = 4beats/measure * 60sec/min * 1000ms/sec)
-    int noteDuration = 240000 / (TEMPO*noteDurations[thisNote]);
-    tone(SPEAKER_PIN, melody[thisNote], noteDuration*NOTE_LENGTH);
+    int noteDuration = 240000 / (TEMPO*beats[thisNote]);
+    tone(SPEAKER_1_PIN, melody[thisNote], noteDuration*NOTE_LENGTH);
+    //tone(SPEAKER_2_PIN, harmony[thisNote], noteDuration*NOTE_LENGTH);
 
     //play note for noteDuration long
     delay(noteDuration);
     // stop the tone playing:
-    noTone(SPEAKER_PIN);
+    noTone(SPEAKER_1_PIN);
+    //noTone(SPEAKER_2_PIN);
   }
   
   //once the tune is done, switch playMusic to false
@@ -213,11 +227,19 @@ void loop()
 
 
 //The Final Countdown
+//      SONG_DURATION
 // 24
+//      Melody
 // NOTE_FS4, NOTE_CS5, NOTE_B4, NOTE_CS5, NOTE_FS4,
 // 0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_CS5, NOTE_B4,
 // 0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_FS4,
-// 0, NOTE_B4, NOTE_A4, NOTE_GS4, NOTE_B4, NOTE_CS5, NOTE_A4, NOTE_FS4
+// 0, NOTE_B4, NOTE_A4, NOTE_B4, NOTE_A4, NOTE_GS4, NOTE_B4, NOTE_A4
+//      Harmony
+// NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_FS4,
+// NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4,
+// NOTE_B3, NOTE_B3, NOTE_B3, NOTE_B3, NOTE_B3,
+// NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_FS4
+//      Beats
 // 3, 16, 16, 4, 4,
 // 3, 16, 16, 8, 8, 4, 
 // 3, 16, 16, 4, 4,
