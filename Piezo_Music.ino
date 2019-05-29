@@ -1,11 +1,11 @@
 /*
     Engineer: Michael Dubisz
-    5/27/2019
+    5/26/2019
     
     This program will play a melody on a piezo buzzer
     
     HARDWARE:
-        Passive piezo buzzer & 100ohm resistor
+        Piezo buzzer (passive or active) & 100ohm resistor
         Button & 10kohm resistor
         
 */
@@ -113,7 +113,7 @@ void pitches()
 #define SONG_DURATION   38
 //beats per minute, based on 4/4 time
 #define TEMPO           110
-//(0 = really short, 1 = really long)
+//0 = really short (stacatto), 1 = really long (legato)
 #define NOTE_LENGTH     0.9
 
 
@@ -145,13 +145,14 @@ int harmony[] = {
 };
 
 
+
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
-// (a dotted note can be the value in between the two notes. EX: dotted quarter-note = 3)
-int beats[] = {
+// (a dotted note = rhythm*2 / 3.0. EX: dotted quarter-note = 4*2/3.0 = 8/3.0)
+double beats[] = {
   4, 8, 8, 8, 8, 8, 8, 1,
-  8, 8, 8, 8, 8, 8, 8, 8, 3, 8, 2,
-  8, 8, 8, 8, 8, 8, 8, 3, 8, 2, 8,
-  3, 8, 8, 8, 8, 3, 8, 2
+  8, 8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2,
+  8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2, 8,
+  (8/3.0), 8, 8, 8, 8, (8/3.0), 8, 2
 };
 
 
@@ -176,9 +177,9 @@ void setup() {
     {
         tone(SPEAKER_1_PIN, NOTE_D3, 1000);
         // lcd.setCursor(0,0);
-        // lcd.print(sizeof(noteDurations));
+        // lcd.print(sizeof(melody));
         // lcd.setCursor(0,1);
-        // lcd.print(SONG_DURATION);
+        // lcd.print(sizeof(beats));
         while(1){}
     }
     
