@@ -110,7 +110,7 @@ void pitches()
 #define SPEAKER_2_PIN   9
 #define BUTTON_PIN      2
 
-#define SONG_DURATION   38
+#define SONG_DURATION   67
 //beats per minute, based on 4/4 time
 #define TEMPO           110
 //0 = really short (stacatto), 1 = really long (legato)
@@ -136,8 +136,11 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 int melody[] = {
   0, NOTE_DS4, NOTE_DS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_GS4,
   0, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_GS4, NOTE_F4, NOTE_FS4, NOTE_F4, NOTE_DS4,
-  0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
-  0, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5
+  0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
+  0, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
+  0, NOTE_FS4, NOTE_FS4, 
+  NOTE_DS5, NOTE_DS5, NOTE_DS5, NOTE_F5, NOTE_FS5, NOTE_FS5, NOTE_F5, NOTE_DS5, NOTE_CS5,
+  0, NOTE_DS5, NOTE_CS5, NOTE_AS4, 0, 0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_CS5, NOTE_F4, NOTE_FS4, NOTE_DS4
 };
 
 int harmony[] = {
@@ -147,12 +150,17 @@ int harmony[] = {
 
 
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
-// (a dotted note = rhythm*2 / 3.0. EX: dotted quarter-note = 4*2/3.0 = 8/3.0)
+// (a tied note rhythm = (rhythm/number) EX: dotted quarter-note (3 8th notes tied together) = 8/3.0)
 double beats[] = {
   4, 8, 8, 8, 8, 8, 8, 1,
   8, 8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2,
-  8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2, 8,
-  (8/3.0), 8, 8, 8, 8, (8/3.0), 8, 2
+  8, 8, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
+  4, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
+  //^^42^^
+  4, 8, 8,
+  8, (8/5.0), 8, 8, 8, (8/3.0), 8, 4, (8/5.0),
+  4, 8, 8, 2, 2, 8, 8, 8, 8, (8/7.0), 8, 8, (8/7.0)
+  //^^67^^
 };
 
 
@@ -180,7 +188,7 @@ void setup() {
         // lcd.print(sizeof(melody));
         // lcd.setCursor(0,1);
         // lcd.print(sizeof(beats));
-        while(1){}
+        //while(1){}
     }
     
         
@@ -225,6 +233,27 @@ void loop()
   //once the tune is done, switch playMusic to false
   playMusic = false;
 }
+
+
+//The Sound of Silence
+//          SONG_DURATION
+//   67
+//          Melody
+//   0, NOTE_DS4, NOTE_DS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_GS4,
+//   0, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_GS4, NOTE_F4, NOTE_FS4, NOTE_F4, NOTE_DS4,
+//   0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
+//   0, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
+//   0, NOTE_FS4, NOTE_FS4, 
+//   NOTE_DS5, NOTE_DS5, NOTE_DS5, NOTE_F5, NOTE_FS5, NOTE_FS5, NOTE_F5, NOTE_DS5, NOTE_CS5,
+//   0, NOTE_DS5, NOTE_CS5, NOTE_AS4, 0, 0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_CS5, NOTE_F4, NOTE_FS4, NOTE_DS4
+//          Beats
+//   4, 8, 8, 8, 8, 8, 8, 1,
+//   8, 8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2,
+//   8, 8, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
+//   4, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
+//   4, 8, 8,
+//   8, (8/5.0), 8, 8, 8, (8/3.0), 8, 4, (8/5.0),
+//   4, 8, 8, 2, 2, 8, 8, 8, 8, (8/7.0), 8, 8, (8/7.0)
 
 
 //The Final Countdown
