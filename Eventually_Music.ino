@@ -1,10 +1,4 @@
-/*
-Engineer: Michael Dubisz
-6/8/2019
 
-This program plays music on buzzers using the Eventually library
-
-*/
 
 
 /*  "Eventually.h" & "Eventually.cpp"  */
@@ -99,6 +93,21 @@ class EvtTimeListener : public EvtListener {
   bool performTriggerAction(EvtContext *);
   private:
   unsigned long startMillis;
+  bool multiFire = false;
+  int numFires = 0;
+};
+
+//Added to handle time listeners in microsecond range
+class EvtTimeMicroListener : public EvtListener {
+  public:
+  EvtTimeMicroListener();
+  EvtTimeMicroListener(unsigned long time_in_micros, bool multiFire, EvtAction trigger);
+  unsigned long micros;
+  void setupListener();
+  bool isEventTriggered();
+  bool performTriggerAction(EvtContext *);
+  private:
+  unsigned long startMicros;
   bool multiFire = false;
   int numFires = 0;
 };
@@ -351,39 +360,124 @@ bool EvtTimeListener::performTriggerAction(EvtContext *c) {
   }
 }
 
+/**/
+//Added to handle time listeners in microsecond range
+/* *** EVT TIME MICRO LISTENER *** */
+EvtTimeMicroListener::EvtTimeMicroListener() {
+  
+}
 
+EvtTimeMicroListener::EvtTimeMicroListener(unsigned long time_in_micros, bool multiFire, EvtAction t) {
+  this->micros = time_in_micros;
+  this->triggerAction = t;
+  this->multiFire = multiFire;
+}
+
+void EvtTimeMicroListener::setupListener() {
+  startMicros = ::micros();
+}
+
+bool EvtTimeMicroListener::isEventTriggered() {
+  unsigned long curTime = ::micros();
+  bool shouldFire = false;
+  if(curTime >= startMicros) {
+    /* Normal */
+    if(curTime - startMicros > this->micros) {
+      shouldFire = true;
+    }
+  } else {
+    /* Wrap-Around! */
+    if(((ULONG_MAX - startMicros) + curTime) > this->micros) {
+      shouldFire = true;
+    }
+  }
+
+  return shouldFire;  
+}
+
+bool EvtTimeMicroListener::performTriggerAction(EvtContext *c) {
+  bool returnval = (*triggerAction)(this, c);
+  if(multiFire) {
+    // On multifire, setup to receive the event again
+    setupListener();
+    // On multifire, we shouldn't stop the event chain no matter what, since we are just restarting in this context
+    return false;
+  } else {
+    return returnval;
+  }
+}
 
 
 
 
 /* Program */
 
-#define LIGHT_PIN   8
-#define BUTTON_PIN  2
+#define BUZZER1_PIN     8
+#define BUZZER2_PIN     9
+//when adding a thrid buzzer, the pitch dropped a little & it got wobbly
+#define BUZZER3_PIN     10
+#define BUTTON_PIN      2
 
 bool playMusic = false;
 EvtManager mgr;
-bool pin_state = LOW;
+bool pin1State = LOW;
+bool pin2State = LOW;
+bool pin3State = LOW;
 
-
-bool PlayTone(){
-    pin_state = !pin_state;
-    digitalWrite(LIGHT_PIN, pin_state);
-}
-
-bool ToggleTone(){
-    if(!playMusic){
-        mgr.addListener(new EvtTimeListener(1, true, (EvtAction)PlayTone));
-    }
-    else{
-        //mgr.removeListener(EvtTimeListener());
-    }
+//create a square wave on first pin
+bool PlayTone1(){
+    pin1State = !pin1State;
+    digitalWrite(BUZZER1_PIN, pin1State);
     
     return true;
 }
 
+//create a square wave on second pin
+bool PlayTone2(){
+    pin2State = !pin2State;
+    digitalWrite(BUZZER2_PIN, pin2State);
+    
+    return true;
+}
+
+//create a square wave on third pin
+bool PlayTone3(){
+    pin3State = !pin3State;
+    digitalWrite(BUZZER3_PIN, pin3State);
+    
+    return true;
+}
+
+
+
+//switch whether a tone is being played or not
+bool ToggleTone(){
+    //reset the context & add back the pin listener for the button
+    mgr.resetContext();
+    mgr.addListener(new EvtPinListener(BUTTON_PIN, (EvtAction)ToggleTone));
+    
+    //if a tone is not currently playing, add a timer to play the tone
+    if(!playMusic){
+        mgr.addListener(new EvtTimeMicroListener(1136, true, (EvtAction)PlayTone1));
+        mgr.addListener(new EvtTimeMicroListener(758, true, (EvtAction)PlayTone2));
+        mgr.addListener(new EvtTimeMicroListener(758, true, (EvtAction)PlayTone3));
+    }
+    //otherwise, stop playing the tone
+    else{
+        digitalWrite(BUZZER1_PIN, LOW);
+        digitalWrite(BUZZER2_PIN, LOW);
+        digitalWrite(BUZZER3_PIN, LOW);
+    }
+
+   //adjust playMusic to match what's currently happening
+    playMusic = !playMusic;
+    return false;
+}
+
 void setup() {
-  pinMode(LIGHT_PIN, OUTPUT);
+  pinMode(BUZZER1_PIN, OUTPUT);
+  pinMode(BUZZER2_PIN, OUTPUT);
+  pinMode(BUZZER3_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
   mgr.addListener(new EvtPinListener(BUTTON_PIN, (EvtAction)ToggleTone));
 }
