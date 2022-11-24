@@ -1,0 +1,113 @@
+/*
+ * 24 November 2022
+ * This project will count how many plastic bottles are dropped into a bin
+ */
+
+//FIXME: add buzzer when bottle is dropped?
+
+
+
+//button
+const int BUTTON_PIN = 8;
+
+
+//Trig of the ultrasonic sensor is hooked to pin 6, and Echo is hooked to pin 7
+const int TRIG_PIN = 6, ECHO_PIN = 7;    
+long duration;
+int distance;
+
+// include the library code:
+#include <LiquidCrystal.h>
+
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
+LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+
+//# of bottles dropped in the bin
+int bottleCount = 0;
+
+
+//get the distance from the ultrasonic sensor
+int getDistance(int trig, int echo){
+  // Clear the TRIG_PIN
+    digitalWrite(trig, LOW);
+    delayMicroseconds(2);
+    
+    // Sets the TRIG_PIN on HIGH state for 10 micro seconds
+    digitalWrite(trig, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trig, LOW);
+    
+    // Reads the ECHO_PIN, returns the sound wave travel time in microseconds
+    duration = pulseIn(echo, HIGH);
+    
+    // Calculate/ return the distance
+    return duration*0.034/2;
+}
+
+
+
+
+void setup() {
+  //set up button
+  pinMode(BUTTON_PIN, INPUT);
+
+  //set up IR sensor
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+}
+
+
+
+
+void loop() {
+
+  lcd.print("Bottle count: ");
+
+  //loop while the button is not pressed
+  while(!digitalRead(BUTTON_PIN)){
+
+
+    //if a bottle is detected, update bottleCount
+    if(getDistance(TRIG_PIN, ECHO_PIN) < 10){
+
+      bottleCount++;
+
+      //print the current bottle count
+      lcd.setCursor(0,14);
+      lcd.print("  ");
+      lcd.setCursor(0,14);
+      lcd.print(bottleCount);
+
+      //wait until the bottle is dropped
+      while(getDistance(TRIG_PIN, ECHO_PIN) <10){delay(5);}
+    }
+    
+    
+  }
+
+  //after the button is pressed, display the points earned
+  lcd.clear();
+  lcd.print("Total bottles:");
+  lcd.setCursor(1,0);
+  lcd.print(bottleCount);
+  delay(2000);
+
+  lcd.clear();
+  lcd.print("You earned");
+  lcd.setCursor(1,0);
+  lcd.print(bottleCount*100);
+  lcd.print(" points!");
+  delay(3000);
+
+  lcd.clear();
+  delay(1000);
+  
+  bottleCount = 0;
+
+
+}
