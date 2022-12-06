@@ -1,0 +1,44 @@
+//6 Dec 2022
+//This program turns on a string of lights if a button is pressed
+
+
+int led1 = 2;
+int button = 8;
+
+
+void setup() {
+  // put your setup code here, to run once:
+  for(int i = led1; i < led1+5; i++){
+    pinMode(i, OUTPUT);
+  }
+
+  pinMode(button, INPUT);
+
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  
+ 
+  if(digitalRead(button)){
+    
+    for(int i = led1; i < led1+5; i++){
+    digitalWrite(i, HIGH);
+    delay(100);
+  }
+
+  for(int i = led1; i < led1+5; i++){
+      digitalWrite(i, LOW);
+      delay(100);
+    }
+
+    delay(500);
+  }
+
+
+
+  
+
+
+}
