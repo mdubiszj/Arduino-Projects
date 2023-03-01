@@ -105,9 +105,8 @@ void pitches()
 #define NOTE_DS8 4978
 }
 
-#define SPEAKER_1_PIN   8
-#define SPEAKER_2_PIN   9
-#define BUTTON_PIN      2
+#define SPEAKER_PIN   8
+#define BUTTON_PIN    2
 
 #define SONG_DURATION   67
 //beats per minute, based on 4/4 time
@@ -131,11 +130,6 @@ int melody[] = {
   0, NOTE_DS5, NOTE_CS5, NOTE_AS4, 0, 0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_CS5, NOTE_F4, NOTE_FS4, NOTE_DS4
 };
 
-int harmony[] = {
-  
-};
-
-
 
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
 // (a tied note rhythm = (rhythm/number) EX: dotted quarter-note (3 8th notes tied together) = 8/3.0)
@@ -152,30 +146,19 @@ double beats[] = {
 };
 
 
-void setup() {
-    
-    for(int i = 0; i < SONG_DURATION; i++)
-    {
-        harmony[i] = harmony[i]/2;
-    }
-    
-    
+void setup() {    
     pinMode(BUTTON_PIN, INPUT);
     
     //set pin 2 as an interrupt
     attachInterrupt(0, ButtonPress, RISING);
     
-    
     //plays a nasty note if the melody, noteDuration, and SONG_DURATION*2 are not all the same
     //(don't ask me why we have to multiply SONG_DURATION by 2)
     if( (sizeof(melody) != sizeof(beats)) || (SONG_DURATION*2 != sizeof(melody)) )
     {
-        tone(SPEAKER_1_PIN, NOTE_D3, 1000);
-        // lcd.setCursor(0,0);
-        // lcd.print(sizeof(melody));
-        // lcd.setCursor(0,1);
-        // lcd.print(sizeof(beats));
-        //while(1){}
+        tone(SPEAKER_PIN, NOTE_D3, 1000);
+        delay(1000);
+        noTone(SPEAKER_PIN)
     }
     
         
@@ -207,13 +190,13 @@ void loop()
     //note duration = 240,000/ (tempo*rhythm of note)
     //(240,000 = 4beats/measure * 60sec/min * 1000ms/sec)
     int noteDuration = 240000 / (TEMPO*beats[thisNote]);
-    tone(SPEAKER_1_PIN, melody[thisNote], noteDuration*NOTE_LENGTH);
+    tone(SPEAKER_PIN, melody[thisNote], noteDuration*NOTE_LENGTH);
     //tone(SPEAKER_2_PIN, harmony[thisNote], noteDuration*NOTE_LENGTH);
 
     //play note for noteDuration long
     delay(noteDuration);
-    // stop the tone playing:
-    noTone(SPEAKER_1_PIN);
+    // stop the tone playing (FIXME: do we need this?)
+    noTone(SPEAKER_PIN);
     //noTone(SPEAKER_2_PIN);
   }
   
