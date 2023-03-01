@@ -9,7 +9,6 @@
         Button & 10kohm resistor
         
 */
-#include <LiquidCrystal.h>
 
 
 //#include "pitches.h"
@@ -120,17 +119,6 @@ void pitches()
 volatile bool playMusic = false;
 
 
-// initialize the library by associating any needed LCD interface pin
-// with the arduino pin number it is connected to
-//NOTE: Some of the LCD pins have been chnaged so that the button could be on pin 2
-//const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
-const int rs = 12, en = 11, d4 = 6, d5 = 5, d6 = 4, d7 = 3;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
-
-
-
-
-
 
 // notes in the melody:
 int melody[] = {
@@ -177,7 +165,6 @@ void setup() {
     //set pin 2 as an interrupt
     attachInterrupt(0, ButtonPress, RISING);
     
-    lcd.begin(16, 2);
     
     //plays a nasty note if the melody, noteDuration, and SONG_DURATION*2 are not all the same
     //(don't ask me why we have to multiply SONG_DURATION by 2)
@@ -207,7 +194,7 @@ void loop()
     
     
   //wait around until playMusic becomes true
-  while (playMusic == false){}
+  while (!playMusic){}
     
     
     // iterate over the notes of the melody:
