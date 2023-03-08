@@ -5,7 +5,8 @@
     This program will play a melody on a piezo buzzer
     
     HARDWARE:
-        Piezo buzzer (passive or active) & 100ohm resistor
+        Piezo buzzer (passive or active)
+        100ohm resistor (or potentiometer) to control volume
         Button & 10kohm resistor
         
 */
@@ -108,148 +109,266 @@ void pitches()
 #define SPEAKER_PIN   8
 #define BUTTON_PIN    2
 
-#define SONG_DURATION   67
+
 //beats per minute, based on 4/4 time
 #define TEMPO           110
 //0 = really short (stacatto), 1 = really long (legato)
-#define NOTE_LENGTH     0.9
+#define NOTE_LENGTH     0.8
 
 
 volatile bool playMusic = false;
 
 
 
+
 // notes in the melody:
 int melody[] = {
-  0, NOTE_DS4, NOTE_DS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_GS4,
-  0, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_GS4, NOTE_F4, NOTE_FS4, NOTE_F4, NOTE_DS4,
-  0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
-  0, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
-  0, NOTE_FS4, NOTE_FS4, 
-  NOTE_DS5, NOTE_DS5, NOTE_DS5, NOTE_F5, NOTE_FS5, NOTE_FS5, NOTE_F5, NOTE_DS5, NOTE_CS5,
-  0, NOTE_DS5, NOTE_CS5, NOTE_AS4, 0, 0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_CS5, NOTE_F4, NOTE_FS4, NOTE_DS4
+  NOTE_D3, NOTE_D3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_C3, NOTE_C3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_B2, NOTE_B2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_AS2, NOTE_AS2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_D3, NOTE_D3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_C3, NOTE_C3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_B2, NOTE_B2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_AS2, NOTE_AS2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_D4, NOTE_D4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_C4, NOTE_C4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_B3, NOTE_B3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_AS3, NOTE_AS3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_D4, NOTE_D4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_C4, NOTE_C4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_B3, NOTE_B3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_AS3, NOTE_AS3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_G4, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, 0, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_G4, NOTE_GS4, NOTE_A4, NOTE_C5, NOTE_A4, NOTE_D5, NOTE_D5, NOTE_D5, NOTE_A4, NOTE_D5, NOTE_C5, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_E4, NOTE_D4, NOTE_C4 
+  
 };
 
 
 // note durations: 4 = quarter note, 8 = eighth note, etc.:
 // (a tied note rhythm = (rhythm/number) EX: dotted quarter-note (3 8th notes tied together) = 8/3.0)
 double beats[] = {
-  4, 8, 8, 8, 8, 8, 8, 1,
-  8, 8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2,
-  8, 8, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
-  4, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
-  //^^42^^
-  4, 8, 8,
-  8, (8/5.0), 8, 8, 8, (8/3.0), 8, 4, (8/5.0),
-  4, 8, 8, 2, 2, 8, 8, 8, 8, (8/7.0), 8, 8, (8/7.0)
-  //^^67^^
+  16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 8, 16, 8, 8, 8, 8, 4, 16, 8, 16, 8, 8, 8, 16, 16, 16, 16, 16, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16, 2, 8, 16, 8, 8, 8, 8, 4, 16, 8, 16, 8, 8, 8, 8, 8, 16, 8
+  
 };
 
 
 void setup() {    
     pinMode(BUTTON_PIN, INPUT);
-    
+    Serial.begin(9600);
     //set pin 2 as an interrupt
     attachInterrupt(0, ButtonPress, RISING);
     
-    //plays a nasty note if the melody, noteDuration, and SONG_DURATION*2 are not all the same
+    //plays a nasty note if the melody and beats are not the same length
     //(don't ask me why we have to multiply SONG_DURATION by 2)
-    if( (sizeof(melody) != sizeof(beats)) || (SONG_DURATION*2 != sizeof(melody)) )
+    if( (sizeof(melody)/sizeof(int) != sizeof(beats)/sizeof(double)) )
     {
         tone(SPEAKER_PIN, NOTE_D3, 1000);
         delay(1000);
-        noTone(SPEAKER_PIN)
-    }
-    
-        
+        Serial.println(sizeof(melody));
+        Serial.println(sizeof(beats));
+        Serial.println(sizeof(int));
+        Serial.println(sizeof(double));
+    } 
 }
+
+
 
 
 //toggle playMusic
 void ButtonPress()
 {
+    delayMicroseconds(20);
     playMusic = !playMusic;
 }
 
 
+
+
 void loop() 
 {
-    
-    
   //wait around until playMusic becomes true
   while (!playMusic){}
     
-    
     // iterate over the notes of the melody:
-  for (int thisNote = 0; thisNote < SONG_DURATION; thisNote++) 
+  for (int thisNote = 0; thisNote < sizeof(melody)/sizeof(int); thisNote++) 
   {
     //if button is pressed, stop the music
-    if(playMusic == false)
+    if(!playMusic)
         break;
         
-    //note duration = 240,000/ (tempo*rhythm of note)
-    //(240,000 = 4beats/measure * 60sec/min * 1000ms/sec)
+    //note duration = 240,000/ (tempo*rhythm of note)     (240,000 = 4beats/measure * 60sec/min * 1000ms/sec)
     int noteDuration = 240000 / (TEMPO*beats[thisNote]);
     tone(SPEAKER_PIN, melody[thisNote], noteDuration*NOTE_LENGTH);
-    //tone(SPEAKER_2_PIN, harmony[thisNote], noteDuration*NOTE_LENGTH);
-
     //play note for noteDuration long
     delay(noteDuration);
-    // stop the tone playing (FIXME: do we need this?)
-    noTone(SPEAKER_PIN);
-    //noTone(SPEAKER_2_PIN);
-  }
+    }
   
   //once the tune is done, switch playMusic to false
   playMusic = false;
 }
 
 
-//The Sound of Silence
-//          SONG_DURATION
-//   67
-//          Melody
-//   0, NOTE_DS4, NOTE_DS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_GS4,
-//   0, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_GS4, NOTE_F4, NOTE_FS4, NOTE_F4, NOTE_DS4,
-//   0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
-//   0, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
-//   0, NOTE_FS4, NOTE_FS4, 
-//   NOTE_DS5, NOTE_DS5, NOTE_DS5, NOTE_F5, NOTE_FS5, NOTE_FS5, NOTE_F5, NOTE_DS5, NOTE_CS5,
-//   0, NOTE_DS5, NOTE_CS5, NOTE_AS4, 0, 0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_CS5, NOTE_F4, NOTE_FS4, NOTE_DS4
-//          Beats
-//   4, 8, 8, 8, 8, 8, 8, 1,
-//   8, 8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2,
-//   8, 8, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
-//   4, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
-//   4, 8, 8,
-//   8, (8/5.0), 8, 8, 8, (8/3.0), 8, 4, (8/5.0),
-//   4, 8, 8, 2, 2, 8, 8, 8, 8, (8/7.0), 8, 8, (8/7.0)
 
 
-//The Final Countdown
-//      SONG_DURATION
-// 24
-//      Melody
-// NOTE_FS4, NOTE_CS5, NOTE_B4, NOTE_CS5, NOTE_FS4,
-// 0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_CS5, NOTE_B4,
-// 0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_FS4,
-// 0, NOTE_B4, NOTE_A4, NOTE_B4, NOTE_A4, NOTE_GS4, NOTE_B4, NOTE_A4
-//      Harmony
-// NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_FS4,
-// NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4,
-// NOTE_B3, NOTE_B3, NOTE_B3, NOTE_B3, NOTE_B3,
-// NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_FS4
-//      Beats
-// 3, 16, 16, 4, 4,
-// 3, 16, 16, 8, 8, 4, 
-// 3, 16, 16, 4, 4,
-// 3, 16, 16, 8, 8, 8, 8, 4
 
 
-// Bum, bada bum bum.... bum bum!
-// 8
-// NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
-// 4, 8, 8, 4, 4, 4, 4, 4
+
+
+
+///////////////////
+// SONG LIBRARY  //
+///////////////////
+
+/*
+The Sound of Silence
+          SONG_DURATION
+   67
+
+          TEMPO
+  110
+          
+  
+          Melody
+   0, NOTE_DS4, NOTE_DS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_GS4,
+   0, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_GS4, NOTE_F4, NOTE_FS4, NOTE_F4, NOTE_DS4,
+   0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
+   0, NOTE_FS4, NOTE_FS4, NOTE_AS4, NOTE_AS4, NOTE_CS5, NOTE_CS5, NOTE_DS5, NOTE_DS5, NOTE_CS5, 0,
+   0, NOTE_FS4, NOTE_FS4, 
+   NOTE_DS5, NOTE_DS5, NOTE_DS5, NOTE_F5, NOTE_FS5, NOTE_FS5, NOTE_F5, NOTE_DS5, NOTE_CS5,
+   0, NOTE_DS5, NOTE_CS5, NOTE_AS4, 0, 0, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_CS5, NOTE_F4, NOTE_FS4, NOTE_DS4
+          Beats
+   4, 8, 8, 8, 8, 8, 8, 1,
+   8, 8, 8, 8, 8, 8, 8, 8, (8/3.0), 8, 2,
+   8, 8, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
+   4, 8, 8, 8, 8, 8, 8, 4, 8, 2, 8,
+   4, 8, 8,
+   8, (8/5.0), 8, 8, 8, (8/3.0), 8, 4, (8/5.0),
+   4, 8, 8, 2, 2, 8, 8, 8, 8, (8/7.0), 8, 8, (8/7.0)
+ */
+
+
+
+
+/*
+The Final Countdown
+      SONG_DURATION
+ 24
+
+      TEMPO
+  110
+      Melody
+ NOTE_FS4, NOTE_CS5, NOTE_B4, NOTE_CS5, NOTE_FS4,
+ 0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_CS5, NOTE_B4,
+ 0, NOTE_D5, NOTE_CS5, NOTE_D5, NOTE_FS4,
+ 0, NOTE_B4, NOTE_A4, NOTE_B4, NOTE_A4, NOTE_GS4, NOTE_B4, NOTE_A4
+ 
+      Harmony
+ NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_FS4, NOTE_FS4,
+ NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_D4,
+ NOTE_B3, NOTE_B3, NOTE_B3, NOTE_B3, NOTE_B3,
+ NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_CS4, NOTE_F4, NOTE_F4, NOTE_FS4
+ 
+      Beats
+ 3, 16, 16, 4, 4,
+ 3, 16, 16, 8, 8, 4, 
+ 3, 16, 16, 4, 4,
+ 3, 16, 16, 8, 8, 8, 8, 4
+ */
+
+
+
+
+/*
+ Bum, bada bum bum.... bum bum!
+ 
+    Melody
+ NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+
+    Beats
+ 4, 8, 8, 4, 4, 4, 4, 4
+*/
+
+
+
+
+/*
+    Super Mario Theme
+
+      TEMPO
+  180
+  
+      Melody
+  NOTE_E5, NOTE_E5, 0, NOTE_E5, 0, NOTE_C5, NOTE_E5,
+  NOTE_G5, 0, NOTE_G4, 0, 
+  NOTE_C5, NOTE_G4, 0, NOTE_E4,
+  NOTE_A4, NOTE_B4, NOTE_AS4, NOTE_A4,
+  NOTE_G4, NOTE_E5, NOTE_G5, NOTE_A5, NOTE_F5, NOTE_G5,
+  0, NOTE_E5,NOTE_C5, NOTE_D5, NOTE_B4,
+  NOTE_C5, NOTE_G4, 0, NOTE_E4,
+  NOTE_A4, NOTE_B4, NOTE_AS4, NOTE_A4,
+  NOTE_G4, NOTE_E5, NOTE_G5, NOTE_A5, NOTE_F5, NOTE_G5,
+  0, NOTE_E5,NOTE_C5, NOTE_D5, NOTE_B4,
+  
+  0, NOTE_G5, NOTE_FS5, NOTE_F5, NOTE_DS5, NOTE_E5,
+  0, NOTE_GS4, NOTE_A4, NOTE_C4, 0, NOTE_A4, NOTE_C5, NOTE_D5,
+  0, NOTE_DS5, 0, NOTE_D5,
+  NOTE_C5, 0,
+  
+  0, NOTE_G5, NOTE_FS5, NOTE_F5, NOTE_DS5, NOTE_E5,
+  0, NOTE_GS4, NOTE_A4, NOTE_C4, 0, NOTE_A4, NOTE_C5, NOTE_D5,
+  0, NOTE_DS5, 0, NOTE_D5,
+  NOTE_C5, 0,
+  
+  NOTE_C5, NOTE_C5, NOTE_C5, 0, NOTE_C5, NOTE_D5,
+  NOTE_E5, NOTE_C5, NOTE_A4, NOTE_G4,
+  
+  NOTE_C5, NOTE_C5, NOTE_C5, 0, NOTE_C5, NOTE_D5, NOTE_E5,
+  0, 
+  NOTE_C5, NOTE_C5, NOTE_C5, 0, NOTE_C5, NOTE_D5,
+  NOTE_E5, NOTE_C5, NOTE_A4, NOTE_G4,
+  NOTE_E5, NOTE_E5, 0, NOTE_E5, 0, NOTE_C5, NOTE_E5,
+  NOTE_G5, 0, NOTE_G4, 0, 
+  
+
+      Beats
+  8, 8, 8, 8, 8, 8, 8,
+  4, 4, 8, 4, 
+  4, 8, 4, 4,
+  4, 4, 8, 4,
+  8, 8, 8, 4, 8, 8,
+  8, 4, 8, 8, 4,
+  4, 8, 4, 4,
+  4, 4, 8, 4,
+  8, 8, 8, 4, 8, 8,
+  8, 4, 8, 8, 4,
+  
+  
+  4, 8, 8, 8, 4, 8,
+  8, 8, 8, 8, 8, 8, 8, 8,
+  4, 4, 8, 4,
+  2, 2,
+  
+  4, 8, 8, 8, 4, 8,
+  8, 8, 8, 8, 8, 8, 8, 8,
+  4, 4, 8, 4,
+  2, 2,
+  
+  8, 4, 8, 8, 8, 4,
+  8, 4, 8, 2,
+  
+  8, 4, 8, 8, 8, 8, 8,
+  1, 
+  8, 4, 8, 8, 8, 4,
+  8, 4, 8, 2,
+  8, 8, 8, 8, 8, 8, 4,
+  4, 4, 4, 4, 
+
+ */
+
+
+
+
+/*
+    Megalovania
+
+        TEMPO
+    110
+
+        Melody
+    NOTE_D3, NOTE_D3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_C3, NOTE_C3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_B2, NOTE_B2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_AS2, NOTE_AS2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_D3, NOTE_D3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_C3, NOTE_C3, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_B2, NOTE_B2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_AS2, NOTE_AS2, NOTE_D4, NOTE_A3, 0, NOTE_GS3, NOTE_G3, NOTE_F3, NOTE_D3, NOTE_F3, NOTE_G3, NOTE_D4, NOTE_D4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_C4, NOTE_C4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_B3, NOTE_B3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_AS3, NOTE_AS3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_D4, NOTE_D4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_C4, NOTE_C4, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_B3, NOTE_B3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_AS3, NOTE_AS3, NOTE_D5, NOTE_A4, 0, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_G4, NOTE_GS4, NOTE_G4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_G4, 0, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_G4, NOTE_GS4, NOTE_A4, NOTE_C5, NOTE_A4, NOTE_D5, NOTE_D5, NOTE_D5, NOTE_A4, NOTE_D5, NOTE_C5, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_D4, NOTE_D4, NOTE_D4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_D4, NOTE_F4, NOTE_E4, NOTE_D4, NOTE_C4 
+
+
+
+        Beats
+    16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 16, 16, 8, 6, 32, 8, 8, 8, 16, 16, 16, 8, 16, 8, 8, 8, 8, 4, 16, 8, 16, 8, 8, 8, 16, 16, 16, 16, 16, 8, 8, 16, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16, 2, 8, 16, 8, 8, 8, 8, 4, 16, 8, 16, 8, 8, 8, 8, 8, 16, 8
+
+ */
+
+
 
 
 // Full Range quarter notes
