@@ -1,0 +1,11 @@
+#define SPEAKER_PIN 8
+
+void setup() {
+    pinMode(SPEAKER_PIN, OUTPUT);
+    
+}
+
+void loop() {
+  tone(SPEAKER_PIN, 4000, 500);
+  delay(2000);
+}
