@@ -1,0 +1,43 @@
+/*
+ * 8 March 2023
+ * This program uses for loops to make a buzzer do a siren from a low to high frequency
+ * 
+ * Hardware:
+ *      Passive Buzzer
+ *      1kOhm Resistor (or potentiometer) to control volume
+ */
+
+
+
+#define SPEAKER_PIN 8
+
+const int MAX_FREQ = 1800;
+const int MIN_FREQ = 500;
+
+
+
+
+void setup() {
+    pinMode(SPEAKER_PIN, OUTPUT);
+}
+
+
+void loop() {
+
+  //i varies from log2(MIN_FREQ) to log2(MAX_FREQ). Logarithm is used to make the siren smooth
+  for(double i= (log(MIN_FREQ)/log(2)); i<(log(MAX_FREQ)/log(2)); i+=0.001){
+    //play the frequency of 2^i
+    tone(SPEAKER_PIN, pow(2,i));
+    delay(2);
+  }
+
+
+  for(double i=(log(MAX_FREQ)/log(2)); i>(log(MIN_FREQ)/log(2)); i-=0.001){
+    //play the frequency of 2^i
+    tone(SPEAKER_PIN, pow(2,i));
+    delay(2);
+  }
+  
+  noTone(SPEAKER_PIN);
+  delay(2000);
+}
