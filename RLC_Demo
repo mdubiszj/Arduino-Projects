@@ -1,0 +1,113 @@
+/*
+  28 April, 2023
+  This program is designed to show that a series RLC circuit has a resonant frequency.
+  Frequency of the blinking LED can be increased/ decreased with 2 buttons.
+
+
+  HARDWARE:
+  - 1 0.47uF Capacitor
+  - 1 1mH Inductor
+  - 1 10Ohm Resistor
+  - 2 LED's
+  - 2 buttons
+  - LCD
+*/
+#include <LiquidCrystal.h>
+
+
+
+int led = 13;
+int upButton = 3;
+int downButton = 2;
+
+const int rs = 5, en = 6, d4 = 8, d5 = 9, d6 = 10, d7 = 11;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+
+volatile int index = 0;
+//delay is the time of half a cycle in microseconds
+//res. freq. 7.34kHz = 136.24us period = 1/2 cycle is about 68us
+unsigned long delays[] = {1000000, 100000, 10000, 1000, 100, 68, 10, 1};
+unsigned long delayTime = delays[0];
+
+
+
+void setup() {
+  pinMode(led, OUTPUT);
+  pinMode(upButton, INPUT_PULLUP);
+  pinMode(downButton, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(upButton), incFreq, FALLING);
+  attachInterrupt(digitalPinToInterrupt(downButton), decFreq, FALLING);
+
+  lcd.begin(16,2);
+  lcd.print("Frequency:");
+  
+  Serial.begin(9600);
+  printFreq();
+}
+
+
+
+void loop() {
+
+  //if the delay time > 1000us, then convert the delay to milliseconds.
+  if(delays[index] > 1000){
+    delayTime = delays[index]/1000;
+    digitalWrite(led, HIGH);   
+    delay(delayTime);
+    digitalWrite(led, LOW);    
+    delay(delayTime);    
+  }
+  else{
+    digitalWrite(led, HIGH);   
+    delayMicroseconds(delays[index]);
+    digitalWrite(led, LOW);    
+    delayMicroseconds(delays[index]);    
+  }   
+}
+
+
+
+
+
+
+//ISR: increase the frequency when the upButton is pressed
+void incFreq() {
+  //take care of debouncing
+  delayMicroseconds(50);
+  //increment index if it is not the max value already (divided by 4 b/c each unsigned int is 4 bytes)
+  if(index < sizeof(delays)/4 -1){
+   index++; 
+  }
+
+  printFreq();
+}
+
+
+
+//ISR: decrease the frequency when the downButton is pressed
+void decFreq() {
+  //take care of debouncing
+  delayMicroseconds(50);
+  //decrement index if it is not at 0 already 
+  if(index > 0){
+   index--; 
+  }
+
+  printFreq();
+}
+
+
+
+//Calculate and print the current frequency
+void printFreq(){
+  lcd.setCursor(0,1);
+  lcd.print("                ");
+  lcd.setCursor(0,1);
+  lcd.print((1.0/(delays[index]*2))*1000000);
+  lcd.print(" Hz");
+  
+  //Serial.print("Frequency: ");
+  //Serial.print((1.0/(delays[index]*2))*1000000);
+  //Serial.println("Hz");
+}
