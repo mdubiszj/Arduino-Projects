@@ -1,0 +1,57 @@
+/*
+ Michael Dubisz
+ 6/4/2023
+ This program controls an 8x8 LED display to show a bouncing ball
+
+
+ HARDWARE:
+    - 8x8 LED Display with MAX7219 chip
+*/
+
+
+#include "LedControl.h"
+
+
+#define DIN 2
+#define CS  3
+#define CLK 4
+
+LedControl lc=LedControl(DIN, CLK, CS,1);
+
+double t = 0;
+double x = 0;
+double y = 0;
+
+
+//60 frames per second
+#define FPS 60
+
+
+
+void setup() {
+  // Take the display out of shutdown mode
+  lc.shutdown(0,false);
+  // Set brightness (0 through 15)
+  lc.setIntensity(0,0);
+  // Clear the display
+  lc.clearDisplay(0);  
+}
+
+
+
+void loop() {
+
+
+  for(double t=0; t<2.55; t+=(1.0/FPS)){
+    x = (8*t)/2.55;
+    //x=0;
+    y = floor(-4.9*pow(t,2) + 12.5 * t);
+    
+    lc.setLed(0,x,y,HIGH);
+    delay(floor(1000/FPS));
+    lc.setLed(0,x,y,LOW);
+  }
+
+  delay(1000);
+
+}
