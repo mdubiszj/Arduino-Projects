@@ -1,0 +1,78 @@
+/*
+ Michael Dubisz
+ 6/4/2023
+ This program controls an 8x8 LED display
+
+
+ HARDWARE:
+    - 8x8 LED Display with MAX7219 chip
+*/
+
+
+
+#include "LedControl.h"
+
+
+#define DIN 2
+#define CS  3
+#define CLK 4
+
+LedControl lc=LedControl(DIN, CLK, CS,1);
+
+void setup() {
+  // Take the display out of shutdown mode
+  lc.shutdown(0,false);
+  // Set brightness (0 through 15)
+  lc.setIntensity(0,0);
+  // Clear the display
+  lc.clearDisplay(0);  
+}
+
+
+void loop() {
+
+
+  //turn each LED on and off
+  for(int i = 0; i<8; i++){
+    for(int j = 0; j<8; j++){
+     lc.setLed(0,j,i,HIGH);
+     delay(50);
+    }
+  }
+
+  for(int i = 0; i<8; i++){
+    for(int j = 0; j<8; j++){
+     lc.setLed(0,j,i,LOW);
+     delay(50);
+    }
+  }
+
+
+  //turn on & off all rows
+  for(int i = 0; i<8; i++){
+    lc.setRow(0,i,0xFF);
+    delay(50);
+  }
+
+  for(int i = 0; i<8; i++){
+    lc.setRow(0,i,0x00);
+    delay(50);
+  }
+
+
+
+  //turn on & off all columns
+  for(int i = 0; i<8; i++){
+    lc.setColumn(0,i,0xFF);
+    delay(50);
+  }
+
+  for(int i = 0; i<8; i++){
+    lc.setColumn(0,i,0x00);
+    delay(50);
+  }
+
+
+  delay(1000);
+
+}
