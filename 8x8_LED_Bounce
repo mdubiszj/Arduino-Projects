@@ -52,6 +52,6 @@ void loop() {
     lc.setLed(0,x,y,LOW);
   }
 
-  delay(1000);
+  //delay(1000);
 
 }
