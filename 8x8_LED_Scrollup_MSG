@@ -1,0 +1,77 @@
+/*
+ Michael Dubisz
+ 6/4/2023
+ This program controls an 8x8 LED display to show a message
+
+Here's where to find a pattern generator: https://www.instructables.com/DOT-Matrix-8x8-Using-Arduino/
+
+
+ HARDWARE:
+    - 8x8 LED Display with MAX7219 chip
+*/
+
+
+#define MSG_LNGTH 4
+byte M[8] = {0x00,0x42,0x66,0x5A,0x42,0x42,0x42,0x00};
+byte I[8] = {0x00,0x7E,0x18,0x18,0x18,0x18,0x7E,0x00};
+byte K[8] = {0x00,0x66,0x6C,0x78,0x78,0x6C,0x66,0x00};
+byte E[8] = {0x00,0x7E,0x60,0x7C,0x7C,0x60,0x7E,0x00};
+byte pi[8] = {0x00,0x40,0x7E,0x26,0x24,0x24,0x26,0x00};
+
+
+#include "LedControl.h"
+
+
+#define DIN 2
+#define CS  3
+#define CLK 4
+
+LedControl lc=LedControl(DIN, CLK, CS,1);
+
+
+void setup() {
+  // Take the display out of shutdown mode
+  lc.shutdown(0,false);
+  // Set brightness (0 through 15)
+  lc.setIntensity(0,0);
+  // Clear the display
+  lc.clearDisplay(0);  
+
+/*
+  byte message[] = {M, I, K, E};
+  for(int i = 0; i < MSG_LNGTH; i++){
+    //for(int j = 0; j
+  }
+    */
+}
+
+
+
+void loop() {
+
+  
+  scrollCharUp(M);
+  scrollCharUp(I);
+  scrollCharUp(K);
+  scrollCharUp(E);
+  scrollCharUp(pi);
+  
+  delay(1000);
+
+}
+
+
+
+void scrollCharUp(byte c[]){
+  for(int i = 0; i<16; i++){
+  
+    for(int j = 0; j<=i; j++){
+      if((j<8) && (i-j < 8)){
+        lc.setColumn(0,j,c[i-j]);
+      }
+      
+    }
+    delay(100);
+    lc.clearDisplay(0);
+  }
+}
