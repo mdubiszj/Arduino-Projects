@@ -1,0 +1,156 @@
+/*
+ Michael Dubisz
+ 6/6/2023
+ This program controls an 8x8 LED display to point an eye different directions
+
+Here's where to find a pattern generator: https://www.instructables.com/DOT-Matrix-8x8-Using-Arduino/
+
+
+ HARDWARE:
+    - 8x8 LED Display with MAX7219 chip
+    - Joystick
+*/
+
+#include "LedControl.h"
+
+
+#define DIN   2
+#define CS    3
+#define CLK   4
+#define BUTTON_PIN  7
+#define XPIN  1
+#define YPIN  0
+
+
+byte eyesCenter[8] = {0x00,0x3C,0x42,0x5A,0x5A,0x42,0x3C,0x00};
+byte eyesRight[8] = {0x00,0x3C,0x42,0x4E,0x4E,0x42,0x3C,0x00};
+byte eyesUpRight[8] = {0x00,0x3C,0x4E,0x4E,0x42,0x42,0x3C,0x00};
+byte eyesUp[8] = {0x00,0x3C,0x5A,0x5A,0x42,0x42,0x3C,0x00};
+byte eyesUpLeft[8] = {0x00,0x3C,0x72,0x72,0x42,0x42,0x3C,0x00};
+byte eyesLeft[8] = {0x00,0x3C,0x42,0x72,0x72,0x42,0x3C,0x00};
+byte eyesDownLeft[8] = {0x00,0x3C,0x42,0x42,0x72,0x72,0x3C,0x00};
+byte eyesDown[8] = {0x00,0x3C,0x42,0x42,0x5A,0x5A,0x3C,0x00};
+byte eyesDownRight[8] = {0x00,0x3C,0x42,0x42,0x4E,0x4E,0x3C,0x00};
+byte eyesBlink[8] = {0x00,0x00,0x00,0x00,0x66,0x7E,0x3C,0x00};      
+byte eyesDrowsy[8] = {0x00,0x00,0x7E,0x5A,0x5A,0x42,0x3C,0x00};
+byte eyesVeryDrowsy[8] = {0x00,0x00,0x00,0x7E,0x5A,0x42,0x3C,0x00};
+
+const int CENTER = 0, RIGHT = 1, UP_RIGHT = 2, UP = 3, UP_LEFT = 4, 
+          LEFT = 5, DOWN_LEFT = 6, DOWN = 7, DOWN_RIGHT = 8, BLINK = 9,
+          DROWSY = 10, VERY_DROWSY = 11;
+
+int eyeState = UP;
+
+
+double long timeOfLastCommand = 0;
+
+int x = 0;
+int y = 0;
+//how far you have to move the joystick from the middle for it to register (normally between 0-400)
+const int CENTER_TOLERANCE = 300;
+
+LedControl lc=LedControl(DIN, CLK, CS,1);
+  
+
+  
+
+void setup() {
+  // Take the display out of shutdown mode
+  lc.shutdown(0,false);
+  // Set brightness (0 through 15)
+  lc.setIntensity(0,0);
+  // Clear the display
+  lc.clearDisplay(0);  
+
+  printEyes(CENTER);
+  
+  Serial.begin(9600);
+
+}
+
+
+void loop() {
+
+
+  //due to orientation, x and y are flipped
+  x = analogRead(YPIN);
+  y = analogRead(XPIN);
+
+  //if any command is input, record the time and do the action
+  if(digitalRead(BUTTON_PIN) || (y > 512 + CENTER_TOLERANCE) || (y < 512 - CENTER_TOLERANCE)
+                             || (x > 512 + CENTER_TOLERANCE) || (x < 512 - CENTER_TOLERANCE))
+  {
+    timeOfLastCommand = millis();       
+                             
+    if(digitalRead(BUTTON_PIN))
+      printEyes(BLINK);
+    else if(y > 512 + CENTER_TOLERANCE){
+      if(x > 512 + CENTER_TOLERANCE)
+        printEyes(UP_RIGHT);
+      else if (x < 512 - CENTER_TOLERANCE)
+        printEyes(UP_LEFT);
+      else
+        printEyes(UP);
+    }
+    else if(y < 512 - CENTER_TOLERANCE){
+      if(x > 512 + CENTER_TOLERANCE)
+        printEyes(DOWN_RIGHT);
+      else if (x < 512 - CENTER_TOLERANCE)
+        printEyes(DOWN_LEFT);
+      else
+        printEyes(DOWN);
+    }
+    else if(x > 512 + CENTER_TOLERANCE)
+        printEyes(RIGHT);
+    else if (x < 512 - CENTER_TOLERANCE)
+        printEyes(LEFT);
+  }
+  //if no command is hit, eyes look straight but get sleepy after a while
+  else{
+    if((millis()-timeOfLastCommand) < 5000)
+      printEyes(CENTER);
+    else if((millis()-timeOfLastCommand) < 10000)
+      printEyes(DROWSY);
+    else if((millis()-timeOfLastCommand) < 15000)
+      printEyes(VERY_DROWSY);
+    else {
+      printEyes(BLINK);
+    }
+  }
+
+
+  delay(100);
+}
+
+
+
+
+//print the eyes pointing a certain direction
+void printEyes(int pos){
+  
+  //if the eye position is changing, move the eyes and update eyeState
+  if(pos != eyeState){
+    lc.clearDisplay(0);
+    for(int i = 0; i < 8; i++) {
+      switch(pos){
+        case CENTER:    {lc.setColumn(0,7-i,eyesCenter[i]);    break;}
+        case RIGHT:     {lc.setColumn(0,7-i,eyesRight[i]);     break;}
+        case UP_RIGHT:  {lc.setColumn(0,7-i,eyesUpRight[i]);   break;}
+        case UP:        {lc.setColumn(0,7-i,eyesUp[i]);        break;}
+        case UP_LEFT:   {lc.setColumn(0,7-i,eyesUpLeft[i]);    break;}
+        case LEFT:      {lc.setColumn(0,i,eyesLeft[i]);        break;}
+        case DOWN_LEFT: {lc.setColumn(0,7-i,eyesDownLeft[i]);  break;}
+        case DOWN:      {lc.setColumn(0,7-i,eyesDown[i]);      break;}
+        case DOWN_RIGHT:{lc.setColumn(0,7-i,eyesDownRight[i]); break;}
+        case BLINK:     {lc.setColumn(0,7-i,eyesBlink[i]);     break;}
+        case DROWSY:    {lc.setColumn(0,7-i,eyesDrowsy[i]);    break;}
+        case VERY_DROWSY:     {lc.setColumn(0,7-i,eyesVeryDrowsy[i]);     break;}
+        default: {break;}
+      }
+    }
+    eyeState = pos;
+  }
+  
+}
+
+
