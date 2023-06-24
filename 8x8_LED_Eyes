@@ -5,6 +5,9 @@
 
 Here's where to find a pattern generator: https://www.instructables.com/DOT-Matrix-8x8-Using-Arduino/
 
+TODO:
+- Rerwite so that only the pupil gets reprinted when the joystick moves (currently the whole eye is redone each time, and the lights blink a little
+
 
  HARDWARE:
     - 8x8 LED Display with MAX7219 chip
@@ -63,7 +66,8 @@ void setup() {
   lc.clearDisplay(0);  
 
   printEyes(CENTER);
-  
+
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
   Serial.begin(9600);
 
 }
@@ -77,12 +81,12 @@ void loop() {
   y = analogRead(XPIN);
 
   //if any command is input, record the time and do the action
-  if(digitalRead(BUTTON_PIN) || (y > 512 + CENTER_TOLERANCE) || (y < 512 - CENTER_TOLERANCE)
+  if(!digitalRead(BUTTON_PIN) || (y > 512 + CENTER_TOLERANCE) || (y < 512 - CENTER_TOLERANCE)
                              || (x > 512 + CENTER_TOLERANCE) || (x < 512 - CENTER_TOLERANCE))
   {
     timeOfLastCommand = millis();       
                              
-    if(digitalRead(BUTTON_PIN))
+    if(!digitalRead(BUTTON_PIN))
       printEyes(BLINK);
     else if(y > 512 + CENTER_TOLERANCE){
       if(x > 512 + CENTER_TOLERANCE)
@@ -152,5 +156,3 @@ void printEyes(int pos){
   }
   
 }
-
-
