@@ -5,9 +5,6 @@
 
 Here's where to find a pattern generator: https://www.instructables.com/DOT-Matrix-8x8-Using-Arduino/
 
-TODO:
-- Rerwite so that only the pupil gets reprinted when the joystick moves (currently the whole eye is redone each time, and the lights blink a little
-
 
  HARDWARE:
     - 8x8 LED Display with MAX7219 chip
@@ -134,7 +131,6 @@ void printEyes(int pos){
   
   //if the eye position is changing, move the eyes and update eyeState
   if(pos != eyeState){
-    lc.clearDisplay(0);
     for(int i = 0; i < 8; i++) {
       switch(pos){
         case CENTER:    {lc.setColumn(0,7-i,eyesCenter[i]);    break;}
