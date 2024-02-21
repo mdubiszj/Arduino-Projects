@@ -1,0 +1,83 @@
+/*  Joystick-controlled LED's
+ *  21 February, 2024
+ *   
+ *   This program uses a joystick and PWM(Pulse-Width Modulation) pins 
+ *   to control the brightness of 4 different LED's
+ *   
+ *    HARDWARE:
+ *    - 1 joystick
+ *    - 4 LED's
+ *    - 4 220 Ohm Resistors
+ */
+
+
+
+//pins for LED's and joystick
+int rightLED = 3;
+int upLED = 5;
+int leftLED = 6;
+int downLED = 9;
+int xPin = 0;
+int yPin = 1;
+
+//values from the joystick
+int x = 0;
+int y = 0;
+
+//how far you have to move the joystick from the middle for it to register (normally between 0-400)
+const int CENTER_TOLERANCE = 300;
+
+
+
+void setup() {
+  //set up pins
+  pinMode(rightLED, OUTPUT);
+  pinMode(upLED, OUTPUT);
+  pinMode(leftLED, OUTPUT);
+  pinMode(downLED, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+
+
+void loop() {
+  //read the values from the joystick (number between 0 and 1023)
+  x = analogRead(xPin);
+  y = analogRead(yPin);
+
+  Serial.print("x: ");
+  Serial.println(xPin);
+  Serial.print("y: ");
+  Serial.println(yPin);
+
+
+  //If the joystick is pushed right, turn on the right LED. Otherwise, turn on the left LED
+  if(x>=512){
+    // change the x value from a number between 512-1023 to a number between 0-255
+    x = map(x, 512, 1023, 0, 255);
+    analogWrite(rightLED, x);
+  }
+  else{
+    // change the x value from a number between 0-512 to a number between 0-255
+    x = map(x, 0, 512, 0, 255);
+    analogWrite(leftLED, x);
+  }
+
+
+  //If the joystick is pushed up, turn on the up LED. Otherwise, turn on the down LED
+  if(y>=512){
+    // change the y value from a number between 512-1023 to a number between 0-255
+    y = map(y, 512, 1023, 0, 255);
+    analogWrite(upLED, y);
+  }
+  else{
+    // change the y value from a number between 0-512 to a number between 0-255
+    y = map(y, 0, 512, 0, 255);
+    analogWrite(downLED, y);
+  }
+
+
+  delay(50);
+
+}
