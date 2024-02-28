@@ -1,0 +1,113 @@
+/*  Joystick-controlled LED Game
+ *   28 February, 2024
+ *
+ *   This program lights random lights and the user has to match the light with the joystick
+ *   
+ *    HARDWARE:
+ *    - 1 joystick
+ *    - 4 LED's
+ *    - 4 220 Ohm Resistors
+ */
+
+
+
+//pins for LED's and joystick
+int rightLED = 9;
+int upLED = 6;
+int leftLED = 3;
+int downLED = 5;
+int xPin = 1;
+int yPin = 0;
+
+//values from the joystick
+int x = 512;
+int y = 512;
+
+
+//which random LED is turned on
+int choice = 0;
+const int RIGHT = 0, UP = 1, LEFT = 2, DOWN = 3;
+
+
+//how far you have to move the joystick from the middle for it to register (normally between 0-400)
+const int CENTER_TOLERANCE = 300;
+
+
+
+void setup() {
+  //set up pins
+  pinMode(rightLED, OUTPUT);
+  pinMode(upLED, OUTPUT);
+  pinMode(leftLED, OUTPUT);
+  pinMode(downLED, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+
+
+void loop() {
+  
+  //pick a random number between 0 and 3
+  choice = rand()%4;
+
+  //Turn a random LED on, and wait until the joystick is pushed in the right direction
+  switch(choice){
+    case RIGHT: {
+      digitalWrite(rightLED, HIGH);
+      while(!(x>512 + CENTER_TOLERANCE)){
+        x = analogRead(yPin);
+      }
+      break;
+    }
+    case UP: {
+      digitalWrite(upLED, HIGH);
+      while(!(y>512 + CENTER_TOLERANCE)){
+        y = analogRead(xPin);
+      }
+      break;
+    }
+    case LEFT: {
+      digitalWrite(leftLED, HIGH);
+      while(!(x<512 - CENTER_TOLERANCE)){
+        x = analogRead(yPin);
+      }
+      break;
+    }
+    case DOWN: {
+      digitalWrite(downLED, HIGH);
+      while(!(y<512 - CENTER_TOLERANCE)){
+        y = analogRead(xPin);
+      }
+      break;
+    }
+    default: {}
+  }
+
+
+
+  //turn all lights of and reset x and y values
+  digitalWrite(rightLED, LOW);
+  digitalWrite(upLED, LOW);
+  digitalWrite(leftLED, LOW);
+  digitalWrite(downLED, LOW);
+  x=512;
+  y=512;
+  
+  
+  
+  delay(1000);
+ 
+
+}
+
+
+
+/* Things to add:
+ *  - count and display the score
+ *  - Put a time limit on the guess
+ *  - Time the player's reaction time between the light turning on and moving the joystick
+ *  - Restart if a wrong direction is hit on the joystick
+ *  - Press button to start
+ *  - ???
+ */
