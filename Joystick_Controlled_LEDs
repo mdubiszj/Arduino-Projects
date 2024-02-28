@@ -1,6 +1,5 @@
 /*  Joystick-controlled LED's
- *  22 February, 2024   
- *
+ *   
  *   This program uses a joystick and PWM(Pulse-Width Modulation) pins 
  *   to control the brightness of 4 different LED's
  *   
@@ -47,9 +46,9 @@ void loop() {
   y = analogRead(xPin);
 
   Serial.print("x: ");
-  Serial.println(xPin);
+  Serial.println(x);
   Serial.print("y: ");
-  Serial.println(yPin);
+  Serial.println(y);
 
 
   
