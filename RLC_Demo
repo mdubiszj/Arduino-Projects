@@ -1,5 +1,5 @@
 /*
-  28 April, 2023
+  21 April, 2024
   This program is designed to show that a series RLC circuit has a resonant frequency.
   Frequency of the blinking LED can be increased/ decreased with 2 buttons.
 
@@ -7,10 +7,12 @@
   HARDWARE:
   - 1 0.47uF Capacitor
   - 1 1mH Inductor
-  - 1 10Ohm Resistor
+  - 1 10 Ohm Resistor
   - 2 LED's
   - 2 buttons
   - LCD
+  -- 1 Potentiometer
+  -- 1 220 Ohm Resistor
 */
 #include <LiquidCrystal.h>
 
