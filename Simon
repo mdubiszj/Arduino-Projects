@@ -1,0 +1,123 @@
+/*  Simon
+ *  12 October, 2024
+ *   
+ *   This program lets the user play the memory game of "Simon" with a joystick
+ *   
+ *    HARDWARE:
+ *    - 1 joystick
+ *    - 4 LED's (blue, red, green, and yellow)
+ *    - 4 220 Ohm Resistors
+ *    - 1 piezo buzzer w/ resistor
+ */
+
+//TODO:
+// - Check random seed for light pattern
+// - Make function to display losing the game
+// - Add a buzzer
+// - Allow for a sequence longer than 64
+
+
+const int BLUE = 0, RED = 1, GREEN = 2, YELLOW = 3;
+int userChoice;
+
+//stores the sequence of random colors
+byte sequence[64];
+
+int currentScore = 1;
+
+//pins for LED's and joystick
+int blueLED = 5;    //blue is on the right
+int redLED = 4;     //red is on the top
+int greenLED = 3;   //green is on the left
+int yellowLED = 2;  //yellow is on the bottom
+
+//joystick pins
+int xPin = 1;
+int yPin = 0;
+
+//values from the joystick
+int x = 512;
+int y = 512;
+
+//how far you have to move the joystick from the middle for it to register (normally between 0-400)
+const int CENTER_TOLERANCE = 400;
+
+
+
+
+
+//Turn the right LED on and off
+void turnOnLED(byte color) {
+  switch (color) {
+    case BLUE: digitalWrite(blueLED, HIGH); break;
+    case RED: digitalWrite(redLED, HIGH); break;
+    case GREEN: digitalWrite(greenLED, HIGH); break;
+    case YELLOW: digitalWrite(yellowLED, HIGH); break;
+  }
+  delay(300);
+  switch (color) {
+    case BLUE: digitalWrite(blueLED, LOW); break;
+    case RED: digitalWrite(redLED, LOW); break;
+    case GREEN: digitalWrite(greenLED, LOW); break;
+    case YELLOW: digitalWrite(yellowLED, LOW); break;
+  }
+  delay(300);  
+}
+
+
+//Read the joystick direction and return the direction
+int readInput(){
+  //read the values from the joystick (number between 0 and 1023) until the joystick is pushed one direction
+  do {
+    x = analogRead(yPin);
+    y = analogRead(xPin);
+    delay(10);
+  }while((x<512+CENTER_TOLERANCE)&&(x>512-CENTER_TOLERANCE) 
+          && (y<512+CENTER_TOLERANCE)&&(y>512-CENTER_TOLERANCE));
+  
+  //return the right color depending on which way the joystick is pushed
+  if(x>=512+CENTER_TOLERANCE){return BLUE;}
+  else if(y>=512+CENTER_TOLERANCE){return RED;}
+  else if (x<=512-CENTER_TOLERANCE){return GREEN;}
+  else if (y<=512 - CENTER_TOLERANCE){return YELLOW;}
+}
+
+
+
+
+
+void setup() {
+  //set up pins
+  pinMode(blueLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(greenLED, OUTPUT);
+  pinMode(yellowLED, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+
+void loop() {
+  //add a new color to the sequence and display the full sequence
+  sequence[currentScore-1] = rand()%4;
+  for(int i=0; i<currentScore; i++){
+    turnOnLED(sequence[i]);
+  }
+
+
+  //user copies the sequence. If they make a mistake, then game over
+  for(int i=0; i<currentScore; i++){
+    userChoice = readInput();
+    if(userChoice != sequence[i]){
+      currentScore=0;
+      break;
+    }
+    else{
+      turnOnLED(userChoice);
+    }
+  }
+  
+
+  currentScore++;
+  delay(1000);
+}
