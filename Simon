@@ -1,5 +1,5 @@
 /*  Simon
- *  12 October, 2024
+ *  14 October, 2024
  *   
  *   This program lets the user play the memory game of "Simon" with a joystick
  *   
@@ -13,7 +13,6 @@
 //TODO:
 // - Check random seed for light pattern
 // - Make function to display losing the game
-// - Add a buzzer
 // - Allow for a sequence longer than 64
 
 
@@ -25,11 +24,13 @@ byte sequence[64];
 
 int currentScore = 1;
 
-//pins for LED's and joystick
+//pins for LED's, buzzer and joystick
 int blueLED = 5;    //blue is on the right
 int redLED = 4;     //red is on the top
 int greenLED = 3;   //green is on the left
 int yellowLED = 2;  //yellow is on the bottom
+
+int buzzer = 7;
 
 //joystick pins
 int xPin = 1;
@@ -49,10 +50,10 @@ const int CENTER_TOLERANCE = 400;
 //Turn the right LED on and off
 void turnOnLED(byte color) {
   switch (color) {
-    case BLUE: digitalWrite(blueLED, HIGH); break;
-    case RED: digitalWrite(redLED, HIGH); break;
-    case GREEN: digitalWrite(greenLED, HIGH); break;
-    case YELLOW: digitalWrite(yellowLED, HIGH); break;
+    case BLUE: digitalWrite(blueLED, HIGH); tone(buzzer, 2093, 300); break;
+    case RED: digitalWrite(redLED, HIGH); tone(buzzer, 2637, 300); break;
+    case GREEN: digitalWrite(greenLED, HIGH); tone(buzzer, 2794, 300); break;
+    case YELLOW: digitalWrite(yellowLED, HIGH); tone(buzzer, 3136, 300); break;
   }
   delay(300);
   switch (color) {
@@ -93,12 +94,14 @@ void setup() {
   pinMode(greenLED, OUTPUT);
   pinMode(yellowLED, OUTPUT);
 
+  pinMode(buzzer, OUTPUT);
+
   Serial.begin(9600);
 }
 
 
 void loop() {
-  //add a new color to the sequence and display the full sequence
+  //add a new random color to the sequence and display the full sequence
   sequence[currentScore-1] = rand()%4;
   for(int i=0; i<currentScore; i++){
     turnOnLED(sequence[i]);
@@ -119,5 +122,5 @@ void loop() {
   
 
   currentScore++;
-  delay(1000);
+  delay(300);
 }
