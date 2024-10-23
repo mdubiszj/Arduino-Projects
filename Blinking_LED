@@ -1,0 +1,27 @@
+int led = 2;
+//int led2 = 3;
+
+
+void setup() {
+  // put your setup code here, to run once:
+
+  pinMode(led, OUTPUT);
+  //pinMode(led2, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  digitalWrite(led, HIGH);
+  Serial.println("LED is on.");
+  //digitalWrite(led2, HIGH);
+  delay(1000);
+
+  digitalWrite(led, LOW);
+  Serial.println("LED is off.");
+  //digitalWrite(led2, LOW);
+  delay(1000);
+
+}
