@@ -1,0 +1,43 @@
+int led = 2;
+int led2 = 3;
+int button = 8;
+
+
+void setup() {
+  // put your setup code here, to run once:
+
+  pinMode(led, OUTPUT);
+  pinMode(led2, OUTPUT);
+
+  pinMode(button, INPUT);
+
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+
+  //if the button is pressed, blink the led's fast!
+  //otherwise, they blink slowly
+  if(digitalRead(button) == HIGH){
+    digitalWrite(led, HIGH);
+    digitalWrite(led2, LOW);
+    delay(200);
+
+    digitalWrite(led, LOW);
+    digitalWrite(led2, LOW);
+    delay(200);
+  }
+
+  else {
+    digitalWrite(led, HIGH);
+    digitalWrite(led2, LOW);
+    delay(1000);
+
+    digitalWrite(led, LOW);
+    digitalWrite(led2, LOW);
+    delay(1000);
+  }
+  
+
+}
