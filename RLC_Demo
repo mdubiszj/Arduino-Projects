@@ -1,5 +1,5 @@
 /*
-  21 April, 2024
+  12 April, 2025
   This program is designed to show that a series RLC circuit has a resonant frequency.
   Frequency of the blinking LED can be increased/ decreased with 2 buttons.
 
@@ -76,13 +76,16 @@ void loop() {
 //ISR: increase the frequency when the upButton is pressed
 void incFreq() {
   //take care of debouncing
-  delayMicroseconds(50);
-  //increment index if it is not the max value already (divided by 4 b/c each unsigned int is 4 bytes)
-  if(index < sizeof(delays)/4 -1){
-   index++; 
+  delayMicroseconds(200);
+  //only do something if the line is still low
+  if(!digitalRead(upButton)){
+    //increment index if it is not the max value already (divided by 4 b/c each unsigned int is 4 bytes)
+    if(index < sizeof(delays)/4 -1){
+     index++; 
+    }
+  
+    printFreq();
   }
-
-  printFreq();
 }
 
 
@@ -90,13 +93,16 @@ void incFreq() {
 //ISR: decrease the frequency when the downButton is pressed
 void decFreq() {
   //take care of debouncing
-  delayMicroseconds(50);
-  //decrement index if it is not at 0 already 
-  if(index > 0){
-   index--; 
+  delayMicroseconds(200);
+  //only do something if the line is still low
+  if(!digitalRead(downButton)){
+    //decrement index if it is not at 0 already 
+    if(index > 0){
+     index--; 
+    }
+  
+    printFreq();
   }
-
-  printFreq();
 }
 
 
